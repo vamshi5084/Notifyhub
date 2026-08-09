@@ -1,6 +1,20 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import {
+  HelpCircle,
+  Send,
+  Search,
+  User,
+  Mail,
+  FileText,
+  MessageSquare,
+  CheckCircle2,
+  Clock,
+  Sparkles,
+  AlertCircle,
+  Building2,
+} from "lucide-react";
 
 type Query = {
   id: string;
@@ -18,9 +32,11 @@ export default function Queries() {
   const [email, setEmail] = useState("");
   const [queries, setQueries] = useState<Query[]>([]);
   const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSubmitting(true);
 
     const form = event.currentTarget;
     const formData = new FormData(form);
@@ -44,13 +60,13 @@ export default function Queries() {
       const result = await response.json();
 
       if (result.success) {
-        setMessage("Query submitted successfully!");
-        setEmail(String(data.email));
-
+        setMessage("Your query has been submitted successfully! Check status below.");
+        const userEmail = String(data.email);
+        setEmail(userEmail);
         form.reset();
 
-        if (data.email) {
-          await loadQueries(String(data.email));
+        if (userEmail) {
+          await loadQueries(userEmail);
         }
       } else {
         setMessage(result.message || "Failed to submit query.");
@@ -58,6 +74,8 @@ export default function Queries() {
     } catch (error) {
       console.error(error);
       setMessage("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -65,7 +83,7 @@ export default function Queries() {
     const currentEmail = emailToLoad || email;
 
     if (!currentEmail.trim()) {
-      setMessage("Please enter your email.");
+      setMessage("Please enter your email to view query history.");
       return;
     }
 
@@ -82,12 +100,12 @@ export default function Queries() {
       if (data.success) {
         setQueries(data.queries);
       } else {
-        setMessage(data.message || "No queries found.");
+        setMessage(data.message || "No queries found for this email.");
         setQueries([]);
       }
     } catch (error) {
       console.error(error);
-      setMessage("Failed to load your queries.");
+      setMessage("Failed to load your queries. Please check network connection.");
       setQueries([]);
     } finally {
       setLoading(false);
@@ -95,284 +113,254 @@ export default function Queries() {
   }
 
   function formatDate(timestamp: number) {
-    if (!timestamp) {
-      return "Unknown";
-    }
-
-    return new Date(timestamp).toLocaleString();
+    if (!timestamp) return "Unknown date";
+    return new Date(timestamp).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
-      {/* Header */}
-      <section className="mb-10">
-        <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Campus Support
-        </p>
-
-        <h1 className="mt-2 text-4xl font-bold">
-          Submit a Query
-        </h1>
-
-        <p className="mt-3 max-w-2xl text-lg text-slate-600">
-          Have a question or concern? Submit your query to the
-          campus administration and check the response here.
-        </p>
-      </section>
-
-      {/* Query Form */}
-      <section className="mb-14 rounded-2xl border bg-white p-6 shadow-sm md:p-8">
-        <h2 className="text-2xl font-bold">
-          Contact Administration
-        </h2>
-
-        <p className="mt-2 text-slate-600">
-          Fill in the details below to submit your query.
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-6 space-y-5"
-        >
-          {/* Name */}
-          <div>
-            <label
-              htmlFor="name"
-              className="mb-2 block font-semibold"
-            >
-              Name
-            </label>
-
-            <input
-              type="text"
-              id="name"
-              name="name"
-              placeholder="Enter your name"
-              required
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
-            />
+    <main className="min-h-screen bg-slate-50 py-10">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <section className="mb-10 rounded-3xl bg-slate-900 px-6 py-10 text-white shadow-xl sm:px-10 sm:py-12">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+            <HelpCircle className="h-4 w-4" /> Campus Support Portal
           </div>
-
-          {/* Email */}
-          <div>
-            <label
-              htmlFor="email"
-              className="mb-2 block font-semibold"
-            >
-              Email
-            </label>
-
-            <input
-              type="email"
-              id="email"
-              name="email"
-              placeholder="Enter your email"
-              required
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
-            />
-          </div>
-
-          {/* Subject */}
-          <div>
-            <label
-              htmlFor="subject"
-              className="mb-2 block font-semibold"
-            >
-              Subject
-            </label>
-
-            <input
-              type="text"
-              id="subject"
-              name="subject"
-              placeholder="Enter query subject"
-              required
-              className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2"
-            />
-          </div>
-
-          {/* Query */}
-          <div>
-            <label
-              htmlFor="message"
-              className="mb-2 block font-semibold"
-            >
-              Query
-            </label>
-
-            <textarea
-              id="message"
-              name="message"
-              rows={6}
-              placeholder="Enter your query"
-              required
-              className="w-full resize-none rounded-lg border px-4 py-3 outline-none focus:ring-2"
-            />
-          </div>
-
-          <button
-            type="submit"
-            className="rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-700"
-          >
-            Submit Query
-          </button>
-        </form>
-
-        {message && (
-          <div className="mt-5 rounded-lg bg-slate-100 p-4">
-            <p className="font-medium text-slate-700">
-              {message}
-            </p>
-          </div>
-        )}
-      </section>
-
-      {/* My Queries */}
-      <section>
-        <div className="mb-6">
-          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Query History
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">
+            Student & Staff Query Desk
+          </h1>
+          <p className="mt-3 max-w-2xl text-slate-300 text-sm sm:text-base leading-relaxed">
+            Have questions regarding academics, fees, hall tickets, or campus facilities? Submit your query to administration and track real-time responses.
           </p>
+        </section>
 
-          <h2 className="mt-2 text-3xl font-bold">
-            My Queries
-          </h2>
+        <div className="grid gap-10 lg:grid-cols-12">
+          {/* Left: Query Submission Form */}
+          <div className="lg:col-span-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Contact Administration
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Fill in the form below to submit a direct ticket
+                  </p>
+                </div>
+              </div>
 
-          <p className="mt-2 text-slate-600">
-            Enter your email to view your submitted queries and
-            admin responses.
-          </p>
-        </div>
-
-        {/* Search */}
-        <div className="mb-8 flex flex-col gap-3 sm:flex-row">
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="Enter your email"
-            className="flex-1 rounded-lg border px-4 py-3 outline-none focus:ring-2"
-          />
-
-          <button
-            type="button"
-            onClick={() => loadQueries()}
-            disabled={loading}
-            className="rounded-lg bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-700 disabled:opacity-50"
-          >
-            {loading ? "Loading..." : "View My Queries"}
-          </button>
-        </div>
-
-        {/* Loading */}
-        {loading && (
-          <div className="rounded-xl border bg-slate-50 p-6 text-center">
-            <p className="text-slate-600">
-              Loading your queries...
-            </p>
-          </div>
-        )}
-
-        {/* No queries */}
-        {!loading && queries.length === 0 && (
-          <div className="rounded-xl border bg-slate-50 p-8 text-center">
-            <h3 className="text-xl font-semibold">
-              No queries found
-            </h3>
-
-            <p className="mt-2 text-slate-600">
-              Enter your email and click "View My Queries" to
-              check your query history.
-            </p>
-          </div>
-        )}
-
-        {/* Query Cards */}
-        {!loading && queries.length > 0 && (
-          <div className="space-y-6">
-            {queries.map((query) => (
-              <article
-                key={query.id}
-                className="rounded-xl border bg-white p-6 shadow-sm"
-              >
-                {/* Query Header */}
-                <div className="flex flex-col justify-between gap-3 border-b pb-4 sm:flex-row">
-                  <div>
-                    <p className="text-sm text-slate-500">
-                      Query ID
-                    </p>
-
-                    <p className="font-semibold">
-                      {query.id}
-                    </p>
-                  </div>
-
-                  <div>
-                    {query.answered ? (
-                      <span className="inline-block rounded-full bg-green-100 px-4 py-1.5 text-sm font-bold text-green-700">
-                        Answered
-                      </span>
-                    ) : (
-                      <span className="inline-block rounded-full bg-yellow-100 px-4 py-1.5 text-sm font-bold text-yellow-700">
-                        Pending
-                      </span>
-                    )}
+              <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                {/* Full Name */}
+                <div>
+                  <label htmlFor="name" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Full Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      placeholder="e.g. Rahul Sharma"
+                      required
+                      className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                    />
                   </div>
                 </div>
 
-                {/* Department */}
-                <p className="mt-5 text-sm text-slate-500">
-                  Department
-                </p>
-
-                <h3 className="mt-1 text-xl font-bold">
-                  {query.department}
-                </h3>
-
-                {/* Query */}
-                <div className="mt-5">
-                  <p className="text-sm font-semibold text-slate-500">
-                    Your Query
-                  </p>
-
-                  <p className="mt-2 leading-7 text-slate-700">
-                    {query.message}
-                  </p>
+                {/* Email Address */}
+                <div>
+                  <label htmlFor="email" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      placeholder="student@college.edu"
+                      required
+                      className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
                 </div>
 
-                {/* Submitted */}
-                <p className="mt-5 text-sm text-slate-500">
-                  Submitted: {formatDate(query.created_at)}
-                </p>
+                {/* Subject */}
+                <div>
+                  <label htmlFor="subject" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Query Subject
+                  </label>
+                  <div className="relative">
+                    <FileText className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      id="subject"
+                      name="subject"
+                      placeholder="e.g. Examination Hall Ticket Issue"
+                      required
+                      className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                    />
+                  </div>
+                </div>
 
-                {/* Admin Answer */}
-                {query.answered && query.answer ? (
-                  <div className="mt-6 rounded-lg bg-green-50 p-5">
-                    <p className="font-bold text-green-800">
-                      Admin Answer
-                    </p>
+                {/* Query Message */}
+                <div>
+                  <label htmlFor="message" className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Detailed Message
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={5}
+                    placeholder="Describe your issue or query clearly..."
+                    required
+                    className="w-full rounded-xl border border-slate-200 p-3.5 text-sm text-slate-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
+                  />
+                </div>
 
-                    <p className="mt-2 leading-7 text-green-900">
-                      {query.answer}
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-600 disabled:opacity-50"
+                >
+                  <Send className="h-4 w-4" />
+                  {submitting ? "Submitting Query..." : "Submit Query Ticket"}
+                </button>
+              </form>
+
+              {message && (
+                <div className="mt-4 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-xs font-medium text-indigo-900">
+                  {message}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Personal Query Status Lookup */}
+          <div className="lg:col-span-6">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                  <Search className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Track My Submitted Queries
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Enter your email address to check response status
+                  </p>
+                </div>
+              </div>
+
+              {/* Email Lookup Input */}
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter email address..."
+                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => loadQueries()}
+                  disabled={loading}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:opacity-50"
+                >
+                  {loading ? "Searching..." : "View History"}
+                </button>
+              </div>
+
+              {/* Queries List */}
+              <div className="mt-6">
+                {loading ? (
+                  <div className="space-y-3">
+                    {[1, 2].map((n) => (
+                      <div
+                        key={n}
+                        className="h-32 animate-pulse rounded-2xl border border-slate-100 bg-slate-50"
+                      ></div>
+                    ))}
+                  </div>
+                ) : queries.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
+                    <HelpCircle className="mx-auto h-8 w-8 text-slate-300" />
+                    <h4 className="mt-2 text-sm font-bold text-slate-700">
+                      No query record selected
+                    </h4>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Enter your email above and click "View History" to inspect admin answers.
                     </p>
                   </div>
                 ) : (
-                  <div className="mt-6 rounded-lg bg-yellow-50 p-5">
-                    <p className="font-semibold text-yellow-800">
-                      Waiting for admin response
-                    </p>
+                  <div className="space-y-4 max-h-[500px] overflow-y-auto pr-1">
+                    {queries.map((q) => (
+                      <div
+                        key={q.id}
+                        className="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:bg-white hover:shadow-xs"
+                      >
+                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                          <span className="font-mono text-xs font-bold text-slate-500">
+                            Ticket #{q.id}
+                          </span>
+                          {q.answered ? (
+                            <span className="flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-700">
+                              <CheckCircle2 className="h-3 w-3" /> Answered
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+                              <Clock className="h-3 w-3 animate-spin" /> Pending Review
+                            </span>
+                          )}
+                        </div>
 
-                    <p className="mt-1 text-sm text-yellow-700">
-                      Your query has been received and is waiting
-                      for a response from the administration.
-                    </p>
+                        <div className="mt-3">
+                          <div className="flex items-center gap-1 text-xs font-semibold text-slate-500">
+                            <Building2 className="h-3.5 w-3.5 text-indigo-500" />
+                            <span>{q.department || "General Administration"}</span>
+                          </div>
+                          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                            "{q.message}"
+                          </p>
+                          <p className="mt-2 text-[11px] text-slate-400">
+                            Submitted: {formatDate(q.created_at)}
+                          </p>
+                        </div>
+
+                        {/* Admin Answer Box */}
+                        {q.answered && q.answer ? (
+                          <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                            <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                              Official Admin Answer:
+                            </span>
+                            <p className="mt-1 text-xs leading-relaxed text-emerald-900 font-medium">
+                              {q.answer}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-800">
+                            Our administration team is currently reviewing your query. You will receive updates here once answered.
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
-              </article>
-            ))}
+              </div>
+            </div>
           </div>
-        )}
-      </section>
+        </div>
+      </div>
     </main>
   );
-}
+}

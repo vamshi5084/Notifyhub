@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NotifyHub",
-  description: "Smart Campus Announcement Platform",
+  title: "NotifyHub - Smart Campus Updates & Notice Portal",
+  description: "Stay informed about campus announcements, upcoming events, important alerts, and college administration queries.",
 };
 
 export default function RootLayout({
@@ -13,10 +14,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className="scroll-smooth">
+      <body className="flex min-h-screen flex-col bg-slate-50 text-slate-900 antialiased">
         <Navbar />
-        {children}
+        <div className="flex-1">{children}</div>
+        <Footer />
       </body>
     </html>
   );
