@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     const admins = await sql`
       SELECT id, username, password
-      FROM notifyhub_admins
+      FROM admins
       WHERE username = ${username}
       LIMIT 1
     `;
