@@ -17,14 +17,25 @@ export async function POST(request: Request) {
     }
 
     const admins = await sql`
-      SELECT id, username
-      FROM admins
+      SELECT id, username, password
+      FROM notifyhub_admins
       WHERE username = ${username}
-      AND password = ${password}
       LIMIT 1
     `;
 
     if (admins.length === 0) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid username or password",
+        },
+        { status: 401 }
+      );
+    }
+
+    const admin = admins[0];
+
+    if (admin.password !== password) {
       return Response.json(
         {
           success: false,

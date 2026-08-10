@@ -2,16 +2,20 @@ import { sql } from "@/lib/db";
 
 export async function GET() {
   try {
-    const result = await sql`
-      SELECT current_database() AS database,
-             current_timestamp AS time
+    const database = await sql`
+      SELECT current_database() AS database
+    `;
+
+    const admins = await sql`
+      SELECT id, username
+      FROM admins
+      ORDER BY id
     `;
 
     return Response.json({
       success: true,
-      message: "Database connection successful",
-      database: result[0].database,
-      time: result[0].time,
+      database: database[0].database,
+      admins: admins,
     });
   } catch (error) {
     console.error(error);
@@ -19,7 +23,8 @@ export async function GET() {
     return Response.json(
       {
         success: false,
-        message: "Database connection failed",
+        message: "Database error",
+        error: String(error),
       },
       { status: 500 }
     );
